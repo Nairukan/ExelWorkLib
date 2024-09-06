@@ -13,6 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_VERSION 1.0)
 #option(C OFF)
 
+find_package(PkgConfig REQUIRED)
+find_package(fmt)
+pkg_check_modules(LIBZIP REQUIRED libzip)
+
 add_library(${PROJECT_NAME} SHARED)
 
 target_sources(${PROJECT_NAME}
@@ -25,12 +29,14 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         # where the library itself will look for its internal headers
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${LIBZIP_INCLUDE_DIR}
     PUBLIC
         # where top-level project will look for the library's public headers
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+target_link_libraries(${PROJECT_NAME} zip fmt)
 
 #[[
 # note that it is not CMAKE_INSTALL_PREFIX we are checking here
