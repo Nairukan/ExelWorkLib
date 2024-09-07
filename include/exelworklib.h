@@ -349,9 +349,8 @@ public:
 
             // Закрытие архива
             errno=0;
-            if (!zip_close(archive)) {
+            if (zip_close(archive)!=0) {
                 std::cerr << "Error closing ZIP archive: " << zip_strerror(archive) << std::endl;
-                std::cerr << "System error: " << strerror(errno) << std::endl; // Вывод системной ошибки
             }
 
         } catch (const std::exception& e) {
