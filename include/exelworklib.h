@@ -187,9 +187,10 @@ public:
         std::string FileName;
         char tempFileName[L_tmpnam];
         std::tmpnam(tempFileName);
-        std::filesystem::path temp_dir = std::filesystem::temp_directory_path() / tempFileName;
+        const std::filesystem::path temp_dir = std::filesystem::temp_directory_path()/tempFileName;
         std::filesystem::create_directory(temp_dir);
         FileName=temp_dir;
+        std::cout << "create temp dir " << FileName << "\n";
         if (!std::filesystem::is_directory(FileName+"/_rels")) std::filesystem::create_directory(FileName+"/_rels");
         if (!std::filesystem::is_directory(FileName+"/xl")) std::filesystem::create_directory(FileName+"/xl");
 
@@ -309,30 +310,54 @@ public:
 
 
         try {
-            int errorp;
-            std::string zip_file_path = zip_full_path;
-            zip_t* archive = zip_open(zip_full_path.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &errorp);
+            std::filesystem::path archive_dir = std::filesystem::path(zip_full_path).parent_path();
+
+                // Проверяем, существует ли эта директория, если нет — создаём её
+                if (!std::filesystem::exists(archive_dir)) {
+                    std::filesystem::create_directories(archive_dir);
+                    std::cout << "Created directory: " << archive_dir << std::endl;
+                }
+
+                int errorp = 0;
+                zip_t* archive = zip_open(zip_full_path.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &errorp);
+
+
             if (!archive) {
-                std::cerr << "Error creating zip file: " << zip_error_strerror(zip_get_error(archive)) << std::endl;
+                std::cerr << "Error creating zip file: " << errorp << std::endl;
+                std::cerr << "System error: " << strerror(errno) << std::endl; // Вывод системной ошибки
+                std::filesystem::remove_all(temp_dir);
                 return;
             }
-            for (const auto& file : std::filesystem::directory_iterator(temp_dir)) {
-                std::ifstream input_file(file.path(), std::ios::binary);
-                std::string contents((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
 
-                zip_source_t* source = zip_source_buffer(archive, contents.c_str(), contents.size(), 0);
-                if (source == nullptr || zip_file_add(archive, file.path().filename().c_str(), source, ZIP_FL_OVERWRITE) < 0) {
-                    std::cerr << "Ошибка при добавлении файла в ZIP: " << zip_strerror(archive) << std::endl;
-                    zip_source_free(source);
+            // Recursively add files to the zip archive
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(temp_dir)) {
+                if (entry.is_regular_file()) {
+                    std::string relative_path = std::filesystem::relative(entry.path(), temp_dir).string();
+                    auto source=zip_source_file(archive, entry.path().c_str(), 0, ZIP_LENGTH_TO_END);
+                    if (source == nullptr) {
+                        std::cerr << "Error create source file to ZIP: " << zip_strerror(archive) << std::endl;
+                        continue;
+                    }
+                    if (zip_file_add(archive, relative_path.c_str(), source, ZIP_FL_OVERWRITE | ZIP_FL_ENC_GUESS) < 0){
+                        std::cerr << "Error adding file to ZIP: " << zip_strerror(archive) << std::endl;
+                        zip_source_free(source);
+                    }
+
                 }
             }
-            if (zip_close(archive) != 0) {
-                std::cerr << "Ошибка при закрытии ZIP архива" << std::endl;
+
+
+            // Закрытие архива
+            errno=0;
+            if (!zip_close(archive)) {
+                std::cerr << "Error closing ZIP archive: " << zip_strerror(archive) << std::endl;
+                std::cerr << "System error: " << strerror(errno) << std::endl; // Вывод системной ошибки
+            }
+
+        } catch (const std::exception& e) {
+            std::cerr << "Exception occurred: " << e.what() << std::endl;
         }
 
-    } catch (const std::exception& e) {
-        std::cerr << "Произошла ошибка: " << e.what() << std::endl;
-    }
 
         std::filesystem::remove_all(temp_dir);
     }
