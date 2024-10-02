@@ -15,13 +15,13 @@ ExelFile* ExelFile::read_CSVs(std::vector<std::string>& filepaths){
             std::ifstream fileIn(filepath);
             //std::cout << sheetName << "\n";
             std::string buffer;
-            for(uint y=1; !fileIn.eof(); y++){
+            for(unsigned int y=1; !fileIn.eof(); y++){
                 getline(fileIn, buffer);
                 if (buffer=="") continue;
                 //std::cout << "\n";
                 auto line=ExelFile::splitBySeparators(buffer, {";"});
                 //std::cout << "endSep\n";
-                for (uint x=1; x<=line.size(); x++){
+                for (unsigned int x=1; x<=line.size(); x++){
                     //std::cout << "<" << line[x-1] << "> " ;
                     if (line[x-1]!=""){
                         //if (std::regex_search(line[x-1], std::smatch, "&"))

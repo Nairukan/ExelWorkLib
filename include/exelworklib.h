@@ -31,7 +31,7 @@ public:
     class SheetExel{
     public:
 
-        static const std::string uint_to_str(uint num){
+        static const std::string uint_to_str(unsigned int num){
             std::string answer="";
             if (num==0) return "0";
             while(num){
@@ -41,7 +41,7 @@ public:
             return answer;
         }
 
-        static inline const std::string convert_Human_Xpos_to_Exel_Xpos(uint xpos){
+        static inline const std::string convert_Human_Xpos_to_Exel_Xpos(unsigned int xpos){
 
             //if (!xpos) return "A";
             std::string answer="";
@@ -128,17 +128,17 @@ public:
 
 
 
-        ExelCeil* operator[](std::pair<uint, uint> pos){ //{x, y}
+        ExelCeil* operator[](std::pair<unsigned int, unsigned int> pos){ //{x, y}
             //std::cout << "Zalupa";
             if (GridSize.first<pos.first){
-                uint delta=pos.first-GridSize.first;
+                unsigned int delta=pos.first-GridSize.first;
                 std::vector<ExelCeil*> filler(delta, nullptr);
-                for (uint i=0; i<GridCeil.size(); i++){
+                for (unsigned int i=0; i<GridCeil.size(); i++){
                     GridCeil[i].insert(GridCeil[i].end(), filler.begin(), filler.end());
                 }
             }
             GridSize.first=std::max(pos.first, GridSize.first);
-            for (uint i=GridSize.second; i<pos.second; i++){
+            for (unsigned int i=GridSize.second; i<pos.second; i++){
                 GridCeil.push_back(std::vector<ExelCeil*>(GridSize.first, nullptr));
             }
             GridSize.second=GridCeil.size();
@@ -152,9 +152,9 @@ public:
             return GridCeil[pos.second-1][pos.first-1];
         }
 
-        const std::pair<uint, uint> size() {return GridSize;}
-        const uint heigth() {return GridSize.second;}
-        const uint width() {return GridSize.first;}
+        const std::pair<unsigned int, unsigned int> size() {return GridSize;}
+        const unsigned int heigth() {return GridSize.second;}
+        const unsigned int width() {return GridSize.first;}
 
 
     private:
@@ -164,7 +164,7 @@ public:
         friend ExelFile;
     protected:
 
-        std::pair<uint, uint> GridSize={0,0};
+        std::pair<unsigned int, unsigned int> GridSize={0,0};
         std::vector<std::vector<ExelCeil*>> GridCeil;
     };
 
@@ -189,7 +189,7 @@ public:
         std::tmpnam(tempFileName);
         const std::filesystem::path temp_dir = std::filesystem::temp_directory_path()/tempFileName;
         std::filesystem::create_directory(temp_dir);
-        FileName=temp_dir;
+        FileName=temp_dir.string().c_str();
         std::cout << "create temp dir " << FileName << "\n";
         if (!std::filesystem::is_directory(FileName+"/_rels")) std::filesystem::create_directory(FileName+"/_rels");
         if (!std::filesystem::is_directory(FileName+"/xl")) std::filesystem::create_directory(FileName+"/xl");
@@ -199,7 +199,7 @@ public:
 
         file_printer.open(FileName+"/[Content_Types].xml");
         file_printer << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default ContentType=\"application/xml\" Extension=\"xml\"/><Default ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" Extension=\"rels\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\" PartName=\"/xl/styles.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\" PartName=\"/xl/sharedStrings.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\" PartName=\"/xl/theme/theme1.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\" PartName=\"/xl/workbook.xml\"/>";
-        for (uint i=1; i<=Sheet_count; i++){
+        for (unsigned int i=1; i<=Sheet_count; i++){
             file_printer << format("<Override ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\" PartName=\"/xl/worksheets/sheet{0}.xml\"/><Override ContentType=\"application/vnd.openxmlformats-officedocument.drawing+xml\" PartName=\"/xl/drawings/drawing{0}.xml\"/>", i);
         }
         file_printer << "</Types>";
@@ -236,7 +236,7 @@ public:
 
         if (!std::filesystem::is_directory(FileName+"/worksheets")) std::filesystem::create_directory(FileName+"/worksheets");
         if (!std::filesystem::is_directory(FileName+"/worksheets/_rels")) std::filesystem::create_directory(FileName+"/worksheets/_rels");
-        uint couner_v=0;
+        unsigned int couner_v=0;
         std::vector <std::string> strings;
         for (int sheet_ind=0; sheet_ind<Sheet_count; sheet_ind++){
             std::vector<std::string> links;
@@ -333,7 +333,7 @@ public:
             for (const auto& entry : std::filesystem::recursive_directory_iterator(temp_dir)) {
                 if (entry.is_regular_file()) {
                     std::string relative_path = std::filesystem::relative(entry.path(), temp_dir).string();
-                    auto source=zip_source_file(archive, entry.path().c_str(), 0, ZIP_LENGTH_TO_END);
+                    auto source=zip_source_file(archive, entry.path().string().c_str(), 0, ZIP_LENGTH_TO_END);
                     if (source == nullptr) {
                         std::cerr << "Error create source file to ZIP: " << zip_strerror(archive) << std::endl;
                         continue;
@@ -374,12 +374,12 @@ public:
     static ExelFile* read_CSVs(std::vector<std::string>& filepaths);
 
 
-    std::map<std::string, uint> SheetNames;
+    std::map<std::string, unsigned int> SheetNames;
 
 private:
     static inline std::vector<std::string> splitBySeparators(std::string& line, std::vector<std::string> separators){
         std::vector<std::string> answer;
-        uint pos=0;
+        unsigned int pos=0;
         while(line!=""){
             //std::cout << line << "\n";
             for (auto now: separators){
@@ -388,7 +388,7 @@ private:
             }
             answer.push_back(line.substr(0, pos));
             if (pos < line.length()) ++pos;
-            line=line.substr(std::min(pos, uint(line.length())));
+            line=line.substr(std::min(pos, (unsigned int)(line.length())));
         }
         return answer;
     }

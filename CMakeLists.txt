@@ -13,9 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_VERSION 1.0)
 #option(C OFF)
 
-find_package(PkgConfig REQUIRED)
-find_package(fmt)
-pkg_check_modules(LIBZIP REQUIRED libzip)
+#find_package(PkgConfig REQUIRED)
+find_package(fmt REQUIRED)
+find_package(libzip REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED)
 
@@ -36,7 +36,7 @@ target_include_directories(${PROJECT_NAME}
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(${PROJECT_NAME} zip fmt)
+target_link_libraries(${PROJECT_NAME} libzip::zip fmt::fmt)
 
 #[[
 # note that it is not CMAKE_INSTALL_PREFIX we are checking here
