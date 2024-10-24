@@ -17,15 +17,22 @@ set(PROJECT_VERSION 1.0)
 find_package(fmt REQUIRED)
 find_package(libzip REQUIRED)
 
-add_library(${PROJECT_NAME} SHARED)
+add_library(${PROJECT_NAME}_static STATIC)
+add_library(${PROJECT_NAME}_shared SHARED)
 
-target_sources(${PROJECT_NAME}
+target_sources(${PROJECT_NAME}_static
     PRIVATE
         include/exelworklib.h
         src/exelworklib.cpp
 )
 
-target_include_directories(${PROJECT_NAME}
+target_sources(${PROJECT_NAME}_shared
+    PRIVATE
+        include/exelworklib.h
+        src/exelworklib.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_static
     PRIVATE
         # where the library itself will look for its internal headers
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -36,8 +43,30 @@ target_include_directories(${PROJECT_NAME}
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(${PROJECT_NAME} libzip::zip fmt::fmt)
 
+target_include_directories(${PROJECT_NAME}_shared
+    PRIVATE
+        # where the library itself will look for its internal headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${LIBZIP_INCLUDE_DIR}
+    PUBLIC
+        # where top-level project will look for the library's public headers
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        # where external projects will look for the library's public headers
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_link_libraries(${PROJECT_NAME}_static 
+    PUBLIC 
+        libzip::zip fmt::fmt
+    PRIVATE
+        -static-libgcc -static-libstdc++
+)
+
+target_link_libraries(${PROJECT_NAME}_shared 
+    PUBLIC 
+        libzip::zip fmt::fmt
+)
 #[[
 # note that it is not CMAKE_INSTALL_PREFIX we are checking here
 if(DEFINED CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -66,26 +95,31 @@ set(public_headers
    include/ExelWorkLib_global.h
 )
 # note that ${public_headers} has to be in quotes
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${public_headers}")
-set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d")
+set_target_properties(${PROJECT_NAME}_shared PROPERTIES PUBLIC_HEADER "${public_headers}")
+set_target_properties(${PROJECT_NAME}_shared PROPERTIES DEBUG_POSTFIX "d")
+
+set_target_properties(${PROJECT_NAME}_static PROPERTIES PUBLIC_HEADER "${public_headers}")
+set_target_properties(${PROJECT_NAME}_static PROPERTIES DEBUG_POSTFIX "d")
+
+set_property(TARGET ${PROJECT_NAME}_static PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 include(GNUInstallDirs)
 
 # install the target and create export-set
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME}_static ${PROJECT_NAME}_shared
     EXPORT "${PROJECT_NAME}Targets"
     # these get default values from GNUInstallDirs, no need to set them
-    #RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # bin
+    #RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR} # bin
     #LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
     #ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # lib
     # except for public headers, as we want them to be inside a library folder
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} # include/SomeLibrary
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}#/${PROJECT_NAME} # include/SomeLibrary
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # include
 )
 
 install(EXPORT "${PROJECT_NAME}Targets"
     FILE "${PROJECT_NAME}Targets.cmake"
-    NAMESPACE ${namespace}::
+    NAMESPACE ${PROJECT_NAME}::
     DESTINATION cmake
 )
 
