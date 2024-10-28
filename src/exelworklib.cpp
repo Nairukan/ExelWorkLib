@@ -1,8 +1,8 @@
 #include "exelworklib.h"
 
-ExelWorkLib::ExelWorkLib()
-{
-}
+//ExelWorkLib::ExelWorkLib()
+//{
+//}
 
 ExelFile* ExelFile::read_CSVs(std::vector<std::string>& filepaths){
     ExelFile* file = new ExelFile;

@@ -67,6 +67,17 @@ target_link_libraries(${PROJECT_NAME}_shared
     PUBLIC 
         libzip::zip fmt::fmt
 )
+
+#[[
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
+#]]
+
+#message(STATUS "BIN_DIR=${CMAKE_INSTALL_BINDIR}")
+
 #[[
 # note that it is not CMAKE_INSTALL_PREFIX we are checking here
 if(DEFINED CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -122,6 +133,25 @@ install(EXPORT "${PROJECT_NAME}Targets"
     NAMESPACE ${PROJECT_NAME}::
     DESTINATION cmake
 )
+
+set(From_cmake_dir_to_library_bin "/../../../bin")
+
+if (WIN32)
+    set(DLL_DIRS
+        "${libzip_DIR}${From_cmake_dir_to_library_bin}"
+        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+    )
+    set(ALL_DLL_FILES "")
+
+    # Проходим по каждой директории из списка
+    foreach(DLL_DIR ${DLL_DIRS})
+        # Получаем список всех .dll файлов в текущей директории
+        file(GLOB DLL_FILES "${DLL_DIR}/*.dll")
+
+        # Добавляем найденные .dll файлы в общую переменную
+        list(APPEND ALL_DLL_FILES ${DLL_FILES})
+    endforeach()
+endif()
 
 include(CMakePackageConfigHelpers)
 
