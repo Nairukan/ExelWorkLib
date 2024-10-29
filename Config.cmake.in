@@ -2,6 +2,8 @@
 
 if (WIN32)
     set(ExelWorkLib_DLL "@ALL_DLL_FILES@")
+    set(ExelWorkLib_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@") 
+    set(ExelWorkLib_INCLUDE_DIR "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@") 
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/ExelWorkLibTargets.cmake")
