@@ -139,9 +139,15 @@ set(From_cmake_dir_to_library_bin "/../../../bin")
 if (WIN32)
     set(DLL_DIRS
         "${libzip_DIR}${From_cmake_dir_to_library_bin}"
-        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
     )
-    set(ALL_DLL_FILES "")
+    set(ALL_DLL_FILES_DEBUG "")
+    set(GENERATED_DLL "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${CMAKE_SHARED_MODULE_PREFIX}${PROJECT_NAME}_shared")
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        set (GENERATED_DLL_DEBUG "${GENERATED_DLL}d")
+    endif()
+    set (GENERATED_DLL_DEBUG "${GENERATED_DLL_DEBUG}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set (GENERATED_DLL_RELEASE "${GENERATED_DLL}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    
 
     # Проходим по каждой директории из списка
     foreach(DLL_DIR ${DLL_DIRS})
@@ -149,8 +155,11 @@ if (WIN32)
         file(GLOB DLL_FILES "${DLL_DIR}/*.dll")
 
         # Добавляем найденные .dll файлы в общую переменную
-        list(APPEND ALL_DLL_FILES ${DLL_FILES})
+        list(APPEND ALL_DLL_FILES_DEBUG ${DLL_FILES})
     endforeach()
+    set(ALL_DLL_FILES_RELEASE ${ALL_DLL_FILES_DEBUG})
+    list(APPEND ALL_DLL_FILES_DEBUG ${GENERATED_DLL_DEBUG})
+    list(APPEND ALL_DLL_FILES_RELEASE ${GENERATED_DLL_RELEASE})
 endif()
 
 include(CMakePackageConfigHelpers)
